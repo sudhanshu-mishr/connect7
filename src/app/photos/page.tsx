@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
 import { createPhoto, toggleLike } from '@/actions/social';
+import { createNote, createStory } from '@/actions/social-suite';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,12 +18,20 @@ export default async function Photos() {
     .select('id,user_id,image_url,caption,created_at')
     .order('created_at', { ascending: false }).limit(40);
 
-  const ids = Array.from(new Set((posts || []).map((post: any) => post.user_id)));
+  const [{ data: stories }, { data: notes }] = await Promise.all([
+    db.from('stories').select('id,user_id,image_path,caption,created_at').gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(40),
+    db.from('notes').select('id,user_id,content,created_at').gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(40),
+  ]);
+  const ids = Array.from(new Set([...(posts || []).map((post: any) => post.user_id), ...(stories || []).map((story: any) => story.user_id), ...(notes || []).map((note: any) => note.user_id)]));
   const { data: people } = ids.length
     ? await db.from('profiles').select('id,full_name,username').in('id', ids)
     : { data: [] as any[] };
   const names = new Map<string, any>((people || []).map((person: any) => [person.id, person]));
   const { data: likes } = await db.from('photo_likes').select('post_id,user_id');
+  const visibleStories = await Promise.all((stories || []).map(async (story: any) => {
+    const { data } = await db.storage.from('connect-stories').createSignedUrl(story.image_path, 600);
+    return { ...story, image_url: data?.signedUrl || '' };
+  }));
 
   return (
     <AppShell active="/photos">

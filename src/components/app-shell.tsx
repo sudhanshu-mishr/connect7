@@ -1,5 +1,81 @@
+'use client';
+
 import Link from 'next/link';
-import {Compass,Users,MessageCircle,Image as ImageIcon,UserRound,Bell,HeartHandshake,LogOut,UserCheck,Camera,Sparkles,Layers3} from 'lucide-react';
-import {signOut} from '@/actions/auth';
-const links=[['/discover','Discover',Compass],['/stories','Stories',Camera],['/prompts','Daily prompts',Sparkles],['/blends','Blends',Layers3],['/requests','Requests',HeartHandshake],['/friends','Friends',UserCheck],['/chats','Chats',MessageCircle],['/groups','Circles',Users],['/photos','Photos',ImageIcon],['/notifications','Activity',Bell],['/profile','Profile',UserRound]] as const;
-export function AppShell({children,active}:{children:React.ReactNode;active?:string}){return <div className="min-h-screen md:flex"><aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 md:p-5"><div className="rounded-[1.8rem] border border-white/70 bg-white/65 p-3 shadow-[0_14px_44px_rgba(35,24,74,.05)] backdrop-blur-xl"><Link href="/discover" className="flex items-center gap-3 rounded-2xl px-3 py-4"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[#302443] to-[#7056b2] text-lg font-bold text-white shadow-lg shadow-violet-950/15">C.</span><span><b className="tracking-[.18em]">CONNECT</b><small className="block text-xs muted">Find your people</small></span></Link><div className="mx-3 my-2 h-px bg-[#eeeaf3]"/><nav className="mt-3 space-y-1">{links.map(([href,label,Icon])=><Link key={href} href={href} className={`group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 hover:translate-x-1 ${active===href?'bg-[#302443] text-white shadow-lg shadow-violet-950/10':'text-[#625d70] hover:bg-[#f4f0fa] hover:text-[#392b58]'}`}><Icon size={18} strokeWidth={1.8}/>{label}{active===href&&<span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#cdb9ff]"/>}</Link>)}</nav><form action={signOut} className="mt-8 border-t border-[#eeeaf3] pt-3"><button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm text-[#817b91] hover:bg-[#f4f0fa] hover:text-[#392b58]"><LogOut size={18}/>Sign out</button></form></div><div className="mt-auto px-3 py-4 text-[11px] tracking-wide text-[#9a93a8]">MADE FOR MEANINGFUL CONNECTIONS</div></aside><main className="min-h-screen w-full md:ml-64 md:w-[calc(100%-16rem)]"><header className="sticky top-0 z-20 flex items-center justify-between border-b border-[#e9e5ef]/80 bg-[#f8f7fb]/85 px-5 py-3 backdrop-blur-xl md:hidden"><Link href="/discover" className="flex items-center gap-2 font-bold tracking-[.2em]"><span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#302443] to-[#7056b2] text-xs text-white">C.</span>CONNECT</Link><Link href="/profile" className="rounded-full border border-[#e7e1f0] bg-white px-3 py-2 text-xs font-semibold text-[#51416f] shadow-sm">Your profile</Link></header><div className="mx-auto max-w-6xl px-4 py-6 pb-28 md:px-8 md:py-10">{children}</div><nav className="fixed inset-x-3 bottom-3 z-30 flex justify-around rounded-2xl border border-white/70 bg-white/90 px-2 py-2 shadow-[0_12px_40px_rgba(35,24,74,.16)] backdrop-blur-xl md:hidden">{links.filter(([href])=>['/discover','/stories','/prompts','/chats','/photos','/blends'].includes(href)).map(([href,label,Icon])=><Link key={href} href={href} className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[10px] transition-all ${active===href?'bg-[#eee8fb] font-semibold text-[#59468f]':'text-[#827c90]'}`}><Icon size={19} strokeWidth={active===href?2.3:1.8}/>{label}</Link>)}</nav></main></div>}
+import { usePathname } from 'next/navigation';
+import { Bell, Compass, HeartHandshake, Home, Image as ImageIcon, Layers3, LogOut, MessageCircle, MoreHorizontal, PlusSquare, Sparkles, Users, UserCheck, UserRound } from 'lucide-react';
+import { signOut } from '@/actions/auth';
+
+const primary = [
+  { href: '/photos', label: 'Home', icon: Home },
+  { href: '/discover', label: 'Discover', icon: Compass },
+  { href: '/stories', label: 'Create', icon: PlusSquare },
+  { href: '/chats', label: 'Chats', icon: MessageCircle },
+  { href: '/profile', label: 'Profile', icon: UserRound },
+] as const;
+
+const secondary = [
+  { href: '/notifications', label: 'Activity', icon: Bell },
+  { href: '/requests', label: 'Requests', icon: HeartHandshake },
+  { href: '/friends', label: 'Friends', icon: UserCheck },
+  { href: '/groups', label: 'Circles', icon: Users },
+  { href: '/prompts', label: 'Daily prompts', icon: Sparkles },
+  { href: '/blends', label: 'Blends', icon: Layers3 },
+] as const;
+
+export function AppShell({ children, active }: { children: React.ReactNode; active?: string }) {
+  const pathname = usePathname();
+  const current = active || pathname;
+  const isActive = (href: string) => current === href || (href !== '/photos' && current.startsWith(href + '/'));
+  return (
+    <div className="min-h-screen bg-[#faf9fc] md:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r border-[#eeeaf3] bg-white/90 px-4 py-5 backdrop-blur-xl md:flex">
+        <Link href="/photos" className="mb-8 flex items-center gap-3 rounded-2xl px-3 py-2">
+          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-[#302443] to-[#8068c4] text-sm font-bold text-white shadow-lg">C.</span>
+          <span><b className="text-sm tracking-[.2em]">CONNECT</b><small className="block text-xs text-[#9992a7]">Find your people</small></span>
+        </Link>
+        <nav className="space-y-1">
+          {primary.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} className={`flex items-center gap-4 rounded-2xl px-4 py-3.5 text-[15px] transition-all duration-200 hover:translate-x-0.5 ${isActive(href) ? 'bg-[#f0ebfb] font-semibold text-[#59468f]' : 'text-[#625d70] hover:bg-[#f8f6fb]'}`}>
+              <Icon size={21} strokeWidth={isActive(href) ? 2.4 : 1.8}/>{label}
+            </Link>
+          ))}
+        </nav>
+        <div className="my-5 border-t border-[#eeeaf3] pt-4">
+          <p className="px-4 pb-2 text-[10px] font-bold tracking-[.18em] text-[#aaa3b5]">YOUR CONNECT</p>
+          <nav className="space-y-1">
+            {secondary.map(({ href, label, icon: Icon }) => (
+              <Link key={href} href={href} className={`flex items-center gap-4 rounded-xl px-4 py-2.5 text-sm transition-colors ${isActive(href) ? 'bg-[#f0ebfb] font-semibold text-[#59468f]' : 'text-[#777184] hover:bg-[#f8f6fb]'}`}>
+                <Icon size={17} strokeWidth={1.8}/>{label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <form action={signOut} className="mt-auto border-t border-[#eeeaf3] pt-4">
+          <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm text-[#817b91] transition hover:bg-[#f8f6fb] hover:text-[#392b58]"><LogOut size={18}/>Sign out</button>
+        </form>
+      </aside>
+
+      <main className="min-h-screen w-full pb-24 md:ml-[248px] md:w-[calc(100%-248px)] md:pb-0">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[#eeeaf3]/80 bg-white/85 px-4 py-3 backdrop-blur-xl md:hidden">
+          <Link href="/photos" className="flex items-center gap-2.5 font-bold tracking-[.18em]">
+            <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#302443] to-[#8068c4] text-[11px] text-white">C.</span>CONNECT
+          </Link>
+          <div className="flex items-center gap-1">
+            <Link aria-label="Daily prompts" href="/prompts" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><Sparkles size={20}/></Link>
+            <Link aria-label="Blends" href="/blends" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><Layers3 size={20}/></Link>
+            <Link aria-label="Activity" href="/notifications" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><Bell size={20}/></Link>
+          </div>
+        </header>
+        <div className="mx-auto max-w-5xl px-0 py-3 sm:px-4 md:px-8 md:py-8">{children}</div>
+        <nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-[#ebe7f0] bg-white/95 px-1 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 shadow-[0_-8px_30px_rgba(35,24,74,.07)] backdrop-blur-xl md:hidden">
+          {primary.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} aria-current={isActive(href) ? 'page' : undefined} className={`relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] transition-all active:scale-95 ${isActive(href) ? 'font-bold text-[#604b9b]' : 'text-[#938da0]'}`}>
+              {isActive(href) && <span className="absolute top-0 h-0.5 w-7 rounded-full bg-[#8068c4]"/>}
+              <Icon size={22} strokeWidth={isActive(href) ? 2.5 : 1.8}/><span>{label}</span>
+            </Link>
+          ))}
+        </nav>
+      </main>
+    </div>
+  );
+}
