@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft, MoreHorizontal, Phone, Video } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
 import { RealtimeChat } from '@/components/realtime-chat';
