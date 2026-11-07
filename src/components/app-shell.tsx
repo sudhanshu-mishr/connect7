@@ -8,7 +8,7 @@ import { signOut } from '@/actions/auth';
 const primary = [
   { href: '/photos', label: 'Home', icon: Home },
   { href: '/discover', label: 'Discover', icon: Compass },
-  { href: '/stories', label: 'Create', icon: PlusSquare },
+  { href: '/create', label: 'Create', icon: PlusSquare },
   { href: '/chats', label: 'Chats', icon: MessageCircle },
   { href: '/profile', label: 'Profile', icon: UserRound },
 ] as const;
@@ -61,7 +61,7 @@ export function AppShell({ children, active }: { children: React.ReactNode; acti
             <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#302443] to-[#8068c4] text-[11px] text-white">C.</span>CONNECT
           </Link>
           <div className="flex items-center gap-1">
-            <Link aria-label="Create" href="/stories" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><PlusSquare size={21}/></Link>
+            <Link aria-label="Create" href="/create" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><PlusSquare size={21}/></Link>
             <Link aria-label="Messages" href="/chats" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><MessageCircle size={21}/></Link>
             <Link aria-label="Activity" href="/notifications" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><Bell size={20}/></Link>
           </div>
