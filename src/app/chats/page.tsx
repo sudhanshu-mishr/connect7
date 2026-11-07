@@ -38,7 +38,7 @@ export default async function Chats() {
       preview: latest?.content || (isGroup ? 'Start the community conversation' : 'Say hello and start the conversation'),
       createdAt: latest?.created_at || null,
       unread,
-      initials: title.split(/\s+/).map((part) => part[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
+      initials: title.split(/\s+/).map((part: string) => part[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
     };
   }).sort((a, b) => {
     if (!a.createdAt) return 1;
