@@ -99,6 +99,12 @@ export default async function Discover() {
           </div>
         </section>
 
+        <section className="grid gap-3 sm:grid-cols-3">
+          <Link href="/stories" className="surface group rounded-2xl p-4 transition hover:-translate-y-1 hover:shadow-lg"><span className="text-xs font-bold uppercase tracking-[.15em] text-[#8b78e6]">24-hour moments</span><h2 className="mt-2 font-semibold">Stories & Notes</h2><p className="mt-1 text-xs leading-5 muted">Share a glimpse of your day.</p><span className="mt-3 inline-block text-xs font-semibold text-[#6552a2]">See what’s happening →</span></Link>
+          <Link href="/prompts" className="surface group rounded-2xl p-4 transition hover:-translate-y-1 hover:shadow-lg"><span className="text-xs font-bold uppercase tracking-[.15em] text-[#8b78e6]">A daily conversation</span><h2 className="mt-2 font-semibold">Daily prompts</h2><p className="mt-1 text-xs leading-5 muted">Answer one question. Find common ground.</p><span className="mt-3 inline-block text-xs font-semibold text-[#6552a2]">Answer today’s prompt →</span></Link>
+          <Link href="/blends" className="surface group rounded-2xl p-4 transition hover:-translate-y-1 hover:shadow-lg"><span className="text-xs font-bold uppercase tracking-[.15em] text-[#8b78e6]">Build together</span><h2 className="mt-2 font-semibold">Your Blends</h2><p className="mt-1 text-xs leading-5 muted">Make shared spaces around interests.</p><span className="mt-3 inline-block text-xs font-semibold text-[#6552a2]">Explore Blends →</span></Link>
+        </section>
+
         <section>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
