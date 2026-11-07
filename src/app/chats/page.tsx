@@ -32,7 +32,7 @@ export default async function Chats() {
     return {
       id: conversation.id,
       href: isGroup && conversation.group_id ? `/groups/${conversation.group_id}` : `/chats/${conversation.id}`,
-      type: isGroup ? 'community' : 'private',
+      type: isGroup ? ('community' as const) : ('private' as const),
       title,
       subtitle: isGroup ? 'Community conversation' : (person?.username ? `@${person.username}` : 'Your connection'),
       preview: latest?.content || (isGroup ? 'Start the community conversation' : 'Say hello and start the conversation'),
