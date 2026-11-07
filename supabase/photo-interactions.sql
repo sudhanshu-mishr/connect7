@@ -26,7 +26,7 @@ create policy photo_comments_insert_own on public.photo_comments
     and exists (select 1 from public.photo_posts p where p.id = post_id)
     and (parent_id is null or exists (
       select 1 from public.photo_comments parent
-      where parent.id = parent_id and parent.post_id = post_id
+      where parent.id = public.photo_comments.parent_id and parent.post_id = public.photo_comments.post_id
     ))
   );
 drop policy if exists photo_comments_delete_own on public.photo_comments;
