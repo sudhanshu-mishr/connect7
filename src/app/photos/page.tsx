@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
-import { Camera, Heart, Sparkles } from 'lucide-react';
+import { Camera, Heart, Sparkles, Clock3 } from 'lucide-react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
 import { createPhoto, toggleLike } from '@/actions/social';
@@ -31,7 +32,7 @@ export default async function Photos() {
           <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold tracking-[.16em] text-white/80"><Sparkles size={13}/> THE MOMENT WALL</span>
           <h1 className="mt-5 text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl">Life looks better<br/><span className="text-[#d9caff]">when it’s shared.</span></h1>
           <p className="mt-4 max-w-lg text-sm leading-6 text-white/70 sm:text-base">A quieter corner of CONNECT for the moments worth keeping. No reels. No noise. Just photos and people.</p>
-          <div className="mt-7 flex flex-wrap items-center gap-3"><a href="#share-moment" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#30234f] shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"><Camera size={17}/> Share a moment</a><span className="text-xs text-white/55">{(posts || []).length} moments shared</span></div>
+          <div className="mt-7 flex flex-wrap items-center gap-3"><a href="#share-moment" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#30234f] shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"><Camera size={17}/> Share a moment</a><Link href="/stories" className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/20"><Clock3 size={16}/> View stories</Link><span className="text-xs text-white/55">{(posts || []).length} moments shared</span></div>
         </div>
       </section>
 
