@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="grid min-h-screen place-items-center"><div className="text-center"><div className="mx-auto h-10 w-10 animate-pulse rounded-2xl bg-[#8b78e6]"/><p className="mt-4 text-sm muted">Finding your people…</p></div></main>}

@@ -1,0 +1,1 @@
+import Link from 'next/link';export default function NotFound(){return <main className="grid min-h-screen place-items-center p-6 text-center"><div><p className="text-sm font-bold tracking-[.2em] text-[#8b78e6]">404</p><h1 className="mt-3 text-3xl font-semibold">This page wandered off.</h1><Link href="/discover" className="btn btn-primary mt-6">Back to CONNECT</Link></div></main>}
