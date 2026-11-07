@@ -34,7 +34,7 @@ export default async function Chats() {
     const latest=(messages || []).find(m=>m.conversation_id===c.id);
     const member=(members || []).find(m=>m.conversation_id===c.id);
     const person:any=member?byId.get(member.user_id):null;
-    return {id:c.id,name:person?.full_name||'Your friend',username:person?.username||'',initial:(person?.full_name||'F').slice(0,1).toUpperCase(),preview:latest?(latest.sender_id===user.id?'You: ':'')+latest.content:'Say hello and start a conversation.',time:latest?.created_at||'',kind:'private'};
+    return {id:c.id,name:person?.full_name||'Your friend',username:person?.username||'',initial:(person?.full_name||'F').slice(0,1).toUpperCase(),preview:latest?(latest.sender_id===user.id?'You: ':'')+latest.content:'Say hello and start a conversation.',time:latest?.created_at||'',kind:'private',groupId:null};
   });
   const groupChats=(conversations || []).filter(c=>c.type==='group').map(c=>{
     const latest=(messages || []).find(m=>m.conversation_id===c.id);
