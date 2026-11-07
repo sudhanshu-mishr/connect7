@@ -97,7 +97,7 @@ export default async function Profile({ searchParams }: { searchParams: { error?
         <aside className="space-y-6">
           <section className="surface rounded-[28px] p-6">
             <div className="flex items-center justify-between gap-3">
-              <div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#8b78e6]">Profile strength</p><h2 className="mt-2 text-xl font-semibold">You're {completion}% there</h2></div>
+              <div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#8b78e6]">Profile strength</p><h2 className="mt-2 text-xl font-semibold">You&apos;re {completion}% there</h2></div>
               <div className="grid h-14 w-14 place-items-center rounded-full border-[5px] border-[#e7e0fb] text-sm font-bold text-[#6552a2]">{completion}%</div>
             </div>
             <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#eeeaf5]"><div className="h-full rounded-full bg-gradient-to-r from-[#7964b7] to-[#a695df]" style={{ width: `${completion}%` }} /></div>
