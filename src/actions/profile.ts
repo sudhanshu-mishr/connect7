@@ -1,3 +1,34 @@
 'use server';
-import { revalidatePath } from 'next/cache'; import { redirect } from 'next/navigation'; import { createClient } from '@/lib/supabase/server';
-export async function saveProfile(formData: FormData) { const db=await createClient(); const {data:{user}}=await db.auth.getUser(); if(!user) redirect('/login'); const full_name=String(formData.get('full_name')||'').trim(); const username=String(formData.get('username')||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,''); const bio=String(formData.get('bio')||'').trim(); const city=String(formData.get('city')||'').trim(); const interests=String(formData.get('interests')||'').split(',').map(x=>x.trim()).filter(Boolean).slice(0,12); const returnTo=String(formData.get('return_to')||''); if(!full_name||username.length<3) redirect((returnTo==='/profile'?'/profile':'/onboarding')+'?error=Enter+a+name+and+a+username+of+at+least+3+characters'); const {error}=await db.from('profiles').upsert({id:user.id,full_name,username,bio,city,interests,updated_at:new Date().toISOString()}); if(error) redirect((returnTo==='/profile'?'/profile':'/onboarding')+'?error='+encodeURIComponent(error.message)); revalidatePath('/'); redirect(returnTo==='/profile'?'/profile':'/assessment'); }
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+
+export async function saveProfile(formData: FormData) {
+  const db = await createClient();
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) redirect('/login');
+
+  const full_name = String(formData.get('full_name') || '').trim();
+  const username = String(formData.get('username') || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  const bio = String(formData.get('bio') || '').trim();
+  const city = String(formData.get('city') || '').trim();
+  const interests = Array.from(new Set(String(formData.get('interests') || '').split(',').map(x => x.trim()).filter(Boolean))).slice(0, 12);
+  const returnTo = String(formData.get('return_to') || '');
+  const destination = returnTo === '/profile' ? '/profile' : '/onboarding';
+
+  if (!full_name || full_name.length > 80 || username.length < 3 || username.length > 24) {
+    redirect(destination + '?error=Enter+a+name+and+a+username+between+3+and+24+characters');
+  }
+
+  const { error } = await db.from('profiles').upsert({
+    id: user.id, full_name, username, bio, city, interests, updated_at: new Date().toISOString()
+  });
+
+  if (error) redirect(destination + '?error=' + encodeURIComponent(error.message));
+
+  revalidatePath('/');
+  revalidatePath('/profile');
+  revalidatePath('/discover');
+  revalidatePath(`/u/${user.id}`);
+  redirect(returnTo === '/profile' ? '/profile?saved=1' : '/assessment');
+}
