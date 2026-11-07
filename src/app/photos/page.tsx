@@ -28,11 +28,7 @@ export default async function Photos() {
 
   return <AppShell active="/photos">
     <div className="mx-auto max-w-[620px]">
-      <header className="mb-4 flex items-center justify-between border-b border-[#eeeaf3] px-4 pb-4 pt-1">
-        <div><p className="text-[10px] font-semibold tracking-[.2em] text-[#8d80a5]">YOUR PEOPLE, YOUR SPACE</p><h1 className="text-[27px] font-bold tracking-tight text-[#302443]">CONNECT</h1></div>
-        <div className="flex items-center gap-1"><Link href="/stories" aria-label="Create a post or story" className="grid h-10 w-10 place-items-center rounded-full text-[#51417e] hover:bg-[#f1edf8]"><Plus size={24}/></Link><Link href="/chats" aria-label="Messages" className="grid h-10 w-10 place-items-center rounded-full text-[#51417e] hover:bg-[#f1edf8]"><MessageCircle size={22}/></Link></div>
-      </header>
-      <div className="mb-5"><StoryStrip stories={visibleStories.filter(s => s.image_url)} currentUserId={user.id}/></div>
+      <div className="mb-5 -mt-3"><StoryStrip stories={visibleStories.filter(s => s.image_url)} currentUserId={user.id}/></div>
       <div className="mb-3 flex items-center justify-between px-1"><h2 className="text-sm font-semibold">Your feed</h2><Link href="/discover" className="text-xs font-semibold text-[#6a579b]">Discover people</Link></div>
       {(posts || []).length ? <div className="space-y-5">{(posts || []).map((post: any) => { const person = profiles.get(post.user_id); const postLikes = (likes || []).filter((like: any) => like.post_id === post.id); return <InteractivePhotoCard key={post.id} post={post} name={person?.full_name || 'CONNECT member'} username={person?.username} liked={postLikes.some((like: any) => like.user_id === user.id)} likes={postLikes.length}/>; })}</div> : <div className="surface rounded-3xl px-6 py-16 text-center"><div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#eee8ff] text-[#604c9b]"><Search size={23}/></div><h3 className="mt-5 text-lg font-semibold">Your feed starts here</h3><p className="mx-auto mt-2 max-w-sm text-sm muted">Share a photo from Create, then find people to connect with.</p><Link href="/stories" className="btn btn-primary mt-6">Create a post</Link></div>}
     </div>
