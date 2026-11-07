@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { MessageCircle, Plus, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
 import { StoryStrip, type StoryItem } from '@/components/story-strip';
@@ -30,7 +30,7 @@ export default async function Photos() {
     <div className="mx-auto max-w-[620px]">
       <div className="mb-5 -mt-3"><StoryStrip stories={visibleStories.filter(s => s.image_url)} currentUserId={user.id}/></div>
       <div className="mb-3 flex items-center justify-between px-1"><h2 className="text-sm font-semibold">Your feed</h2><Link href="/discover" className="text-xs font-semibold text-[#6a579b]">Discover people</Link></div>
-      {(posts || []).length ? <div className="space-y-5">{(posts || []).map((post: any) => { const person = profiles.get(post.user_id); const postLikes = (likes || []).filter((like: any) => like.post_id === post.id); return <InteractivePhotoCard key={post.id} post={post} name={person?.full_name || 'CONNECT member'} username={person?.username} liked={postLikes.some((like: any) => like.user_id === user.id)} likes={postLikes.length}/>; })}</div> : <div className="surface rounded-3xl px-6 py-16 text-center"><div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#eee8ff] text-[#604c9b]"><Search size={23}/></div><h3 className="mt-5 text-lg font-semibold">Your feed starts here</h3><p className="mx-auto mt-2 max-w-sm text-sm muted">Share a photo from Create, then find people to connect with.</p><Link href="/stories" className="btn btn-primary mt-6">Create a post</Link></div>}
+      {(posts || []).length ? <div className="space-y-5">{(posts || []).map((post: any) => { const person = profiles.get(post.user_id); const postLikes = (likes || []).filter((like: any) => like.post_id === post.id); return <InteractivePhotoCard key={post.id} post={post} name={person?.full_name || 'CONNECT member'} username={person?.username} liked={postLikes.some((like: any) => like.user_id === user.id)} likes={postLikes.length}/>; })}</div> : <div className="surface rounded-3xl px-6 py-16 text-center"><div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#eee8ff] text-[#604c9b]"><Search size={23}/></div><h3 className="mt-5 text-lg font-semibold">Your feed starts here</h3><p className="mx-auto mt-2 max-w-sm text-sm muted">Share a photo from Create, then find people to connect with.</p><Link href="/create" className="btn btn-primary mt-6">Create a post</Link></div>}
     </div>
   </AppShell>;
 }
