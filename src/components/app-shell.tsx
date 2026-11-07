@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, Compass, HeartHandshake, Home, Image as ImageIcon, Layers3, LogOut, MessageCircle, MoreHorizontal, PlusSquare, Sparkles, Users, UserCheck, UserRound } from 'lucide-react';
+import { Bell, Compass, HeartHandshake, Home, Layers3, LogOut, MessageCircle, PlusSquare, Sparkles, Users, UserCheck, UserRound } from 'lucide-react';
 import { signOut } from '@/actions/auth';
 
 const primary = [
@@ -61,8 +61,8 @@ export function AppShell({ children, active }: { children: React.ReactNode; acti
             <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#302443] to-[#8068c4] text-[11px] text-white">C.</span>CONNECT
           </Link>
           <div className="flex items-center gap-1">
-            <Link aria-label="Daily prompts" href="/prompts" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><Sparkles size={20}/></Link>
-            <Link aria-label="Blends" href="/blends" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><Layers3 size={20}/></Link>
+            <Link aria-label="Create" href="/stories" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><PlusSquare size={21}/></Link>
+            <Link aria-label="Messages" href="/chats" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><MessageCircle size={21}/></Link>
             <Link aria-label="Activity" href="/notifications" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><Bell size={20}/></Link>
           </div>
         </header>
