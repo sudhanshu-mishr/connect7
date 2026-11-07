@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Search, MessageCircle, Users, ChevronRight, Plus } from 'lucide-react';
+import { Search, MessageCircle, Users, ChevronRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
 import { NotesStrip } from '@/components/notes-strip';
