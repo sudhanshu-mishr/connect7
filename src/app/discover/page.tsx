@@ -1,215 +1,84 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import {
-  ArrowRight,
-  CheckCircle2,
-  Compass,
-  Heart,
-  MapPin,
-  Sparkles,
-  Users,
-} from 'lucide-react';
+import { ArrowRight, Heart, MapPin, Search, Sparkles, Users, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
 import { sendRequest } from '@/actions/connections';
 
 type MatchRow = { profile_id: string; compatibility_score: number };
 
+export const dynamic = 'force-dynamic';
+
 export default async function Discover() {
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   if (!user) redirect('/login');
-
-  const { data: me } = await db.from('profiles')
-    .select('id, interests')
-    .eq('id', user.id)
-    .maybeSingle();
+  const { data: me } = await db.from('profiles').select('id,interests').eq('id', user.id).maybeSingle();
   if (!me) redirect('/onboarding');
-
-  const { data: myAnswers } = await db.from('assessment_answers')
-    .select('user_id')
-    .eq('user_id', user.id)
-    .maybeSingle();
+  const { data: myAnswers } = await db.from('assessment_answers').select('user_id').eq('user_id', user.id).maybeSingle();
   if (!myAnswers) redirect('/assessment');
 
-  // Compatibility is calculated securely in Postgres. Individual answers are never exposed here.
+  // Compatibility is computed in Postgres; individual assessment answers remain private.
   const { data: matchRows, error: matchError } = await db.rpc('get_connect_discover_matches');
   if (matchError) throw new Error('Could not load compatible people: ' + matchError.message);
-
   const rows = (matchRows || []) as MatchRow[];
   const ids = rows.map(row => row.profile_id);
   const scoreById = new Map(rows.map(row => [row.profile_id, row.compatibility_score]));
-  const { data: profiles, error: profilesError } = ids.length
-    ? await db.from('profiles')
-        .select('id,full_name,username,bio,city,interests')
-        .in('id', ids)
-    : { data: [], error: null };
-  if (profilesError) throw new Error('Could not load matching profiles: ' + profilesError.message);
-
+  const [{ data: profiles }, { data: outgoing }, { data: incoming }, { data: connections }] = await Promise.all([
+    ids.length ? db.from('profiles').select('id,full_name,username,bio,city,interests').in('id', ids) : Promise.resolve({ data: [] as any[] }),
+    db.from('connection_requests').select('to_user,status').eq('from_user', user.id),
+    db.from('connection_requests').select('from_user,status').eq('to_user', user.id),
+    db.from('connections').select('user_a,user_b').or('user_a.eq.' + user.id + ',user_b.eq.' + user.id)
+  ]);
+  const sent = new Set((outgoing || []).filter(r => r.status === 'pending').map(r => r.to_user));
+  const received = new Set((incoming || []).filter(r => r.status === 'pending').map(r => r.from_user));
+  const connected = new Set((connections || []).map(c => c.user_a === user.id ? c.user_b : c.user_a));
   const myInterests = (me.interests || []) as string[];
   const matches = (profiles || []).map(profile => {
     const interests = (profile.interests || []) as string[];
-    const common = myInterests.filter((interest: string) =>
-      interests.some((other: string) => other.toLowerCase() === interest.toLowerCase())
-    );
-    return {
-      ...profile,
-      score: Math.round(scoreById.get(profile.id) || 0),
-      common,
-      initials: (profile.full_name || 'C')
-        .split(' ')
-        .filter(Boolean)
-        .map((part: string) => part[0])
-        .slice(0, 2)
-        .join('')
-        .toUpperCase(),
-    };
-  }).filter(profile => profile.score >= 50).sort((a, b) => b.score - a.score);
+    const common = myInterests.filter((interest: string) => interests.some((other: string) => other.toLowerCase() === interest.toLowerCase()));
+    return { ...profile, score: Math.round(scoreById.get(profile.id) || 0), common,
+      initials: (profile.full_name || 'C').split(' ').filter(Boolean).slice(0,2).map((part: string) => part[0]).join('').toUpperCase() };
+  }).filter(profile => profile.score >= 50 && !connected.has(profile.id)).sort((a,b) => b.score-a.score);
 
-  return (
-    <AppShell active="/discover">
-      <div className="space-y-8">
-        <section className="relative overflow-hidden rounded-[2rem] bg-[#29233d] px-6 py-8 text-white shadow-[0_24px_70px_rgba(41,35,61,0.18)] md:px-9 md:py-10">
-          <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-[#8b78e6]/25 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-32 right-1/3 h-64 w-64 rounded-full bg-[#c9baff]/15 blur-3xl" />
-          <div className="relative flex flex-col justify-between gap-7 md:flex-row md:items-end">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold tracking-wide text-[#e7e0ff]">
-                <Sparkles size={14} />
-                A better kind of discovery
+  return <AppShell active="/discover">
+    <div className="mx-auto max-w-4xl">
+      <header className="px-4 pb-5 sm:px-0">
+        <div className="flex items-center justify-between">
+          <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#8b78e6]">Find your people</p><h1 className="mt-1 text-2xl font-bold tracking-tight text-[#302443]">Discover</h1></div>
+          <Link href="/assessment" className="inline-flex items-center gap-1.5 rounded-full border border-[#e8e2f2] bg-white px-3 py-2 text-[11px] font-semibold text-[#66548f]"><Sparkles size={14}/> Update match</Link>
+        </div>
+        <p className="mt-2 max-w-lg text-sm leading-5 text-[#898196]">People who share your wavelength, interests and outlook.</p>
+        <div className="mt-4 flex items-center gap-2 overflow-hidden rounded-2xl border border-[#e9e4ef] bg-white px-3.5 py-3 text-xs text-[#aaa3b2] shadow-sm"><Search size={16}/>People matched to your mindset</div>
+        <div className="mt-3 flex items-center gap-2 text-[10px] text-[#928aa0]"><CheckCircle2 size={13} className="text-[#7b68b2]"/> Ranked by private 10-question compatibility · Answers are never shown</div>
+      </header>
+
+      <section className="px-3 sm:px-0">
+        <div className="mb-4 flex items-end justify-between"><div><h2 className="text-base font-bold text-[#302443]">Your potential circle</h2><p className="mt-0.5 text-xs text-[#938ca0]">{matches.length} compatible {matches.length === 1 ? 'person' : 'people'} to discover</p></div><span className="rounded-full bg-[#f0ecf8] px-3 py-1.5 text-[10px] font-semibold text-[#6a5798]">50%+ match</span></div>
+        {matches.length ? <div className="space-y-3">{matches.map(profile => {
+          const requestSent = sent.has(profile.id);
+          const requestReceived = received.has(profile.id);
+          return <article key={profile.id} className="overflow-hidden rounded-[1.4rem] border border-[#eeeaf3] bg-white shadow-[0_5px_24px_rgba(35,24,74,.035)] transition hover:border-[#d9cfee] hover:shadow-[0_12px_32px_rgba(35,24,74,.07)]">
+            <div className="p-4 sm:p-5">
+              <div className="flex items-start gap-3.5">
+                <Link href={'/u/' + profile.id} className="grid h-[62px] w-[62px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#eee8fb] to-[#cbbce9] text-xl font-bold text-[#55427f] ring-2 ring-[#f4f0fa] ring-offset-2">{profile.initials || 'C'}</Link>
+                <div className="min-w-0 flex-1 pt-0.5"><div className="flex flex-wrap items-center gap-x-2 gap-y-1"><Link href={'/u/' + profile.id} className="truncate text-[15px] font-bold text-[#302a3d]">{profile.full_name || 'CONNECT member'}</Link><span className="text-[11px] text-[#a29aaa]">@{profile.username || 'member'}</span></div>
+                  {profile.city && <p className="mt-1 flex items-center gap-1 text-[11px] text-[#938a9f]"><MapPin size={11}/>{profile.city}</p>}
+                  <p className="mt-2 line-clamp-2 text-xs leading-[1.55] text-[#746d82]">{profile.bio || 'Here to meet thoughtful people and build genuine connections.'}</p>
+                </div>
+                <div className="shrink-0 text-right"><p className="text-[22px] font-bold leading-none tracking-tight text-[#6652a5]">{profile.score}%</p><p className="mt-1 text-[9px] font-bold uppercase tracking-[.13em] text-[#a29aaa]">match</p></div>
               </div>
-              <h1 className="mt-5 text-3xl font-semibold tracking-tight md:text-5xl">
-                Find people on your wavelength.
-              </h1>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-white/70 md:text-base">
-                Less scrolling, more meaningful connections. Discover people whose answers and interests align with yours.
-              </p>
-            </div>
-            <Link
-              href="/assessment"
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#33294f] transition hover:-translate-y-0.5 hover:bg-[#f0ecff]"
-            >
-              Retake assessment <ArrowRight size={16} />
-            </Link>
-          </div>
-          <div className="relative mt-8 flex flex-wrap gap-3 text-xs text-white/75">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"><CheckCircle2 size={14} /> 10-question compatibility</span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"><Heart size={14} /> 50% or higher to discover</span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"><Users size={14} /> Requests before private chat</span>
-          </div>
-        </section>
-
-        <section className="grid gap-3 sm:grid-cols-3">
-          <Link href="/stories" className="surface group rounded-2xl p-4 transition hover:-translate-y-1 hover:shadow-lg"><span className="text-xs font-bold uppercase tracking-[.15em] text-[#8b78e6]">24-hour moments</span><h2 className="mt-2 font-semibold">Stories & Notes</h2><p className="mt-1 text-xs leading-5 muted">Share a glimpse of your day.</p><span className="mt-3 inline-block text-xs font-semibold text-[#6552a2]">See what’s happening →</span></Link>
-          <Link href="/prompts" className="surface group rounded-2xl p-4 transition hover:-translate-y-1 hover:shadow-lg"><span className="text-xs font-bold uppercase tracking-[.15em] text-[#8b78e6]">A daily conversation</span><h2 className="mt-2 font-semibold">Daily prompts</h2><p className="mt-1 text-xs leading-5 muted">Answer one question. Find common ground.</p><span className="mt-3 inline-block text-xs font-semibold text-[#6552a2]">Answer today’s prompt →</span></Link>
-          <Link href="/blends" className="surface group rounded-2xl p-4 transition hover:-translate-y-1 hover:shadow-lg"><span className="text-xs font-bold uppercase tracking-[.15em] text-[#8b78e6]">Build together</span><h2 className="mt-2 font-semibold">Your Blends</h2><p className="mt-1 text-xs leading-5 muted">Make shared spaces around interests.</p><span className="mt-3 inline-block text-xs font-semibold text-[#6552a2]">Explore Blends →</span></Link>
-        </section>
-
-        <section>
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[.18em] text-[#8b78e6]">Your potential circle</p>
-              <h2 className="mt-1 text-2xl font-semibold tracking-tight text-[#211c34]">People worth meeting</h2>
-              <p className="mt-1 text-sm muted">
-                {matches.length
-                  ? `${matches.length} compatible ${matches.length === 1 ? 'person' : 'people'} found`
-                  : 'New connections appear here as more people complete their assessment.'}
-              </p>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#e8e2f2] bg-white/75 px-3 py-2 text-xs font-medium text-[#6f6683]">
-              <Compass size={14} className="text-[#8b78e6]" /> Ranked by compatibility
-            </div>
-          </div>
-
-          {matches.length === 0 ? (
-            <div className="surface mt-5 overflow-hidden rounded-3xl p-8 text-center md:p-12">
-              <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#f0ecff] text-[#7561bd]">
-                <Users size={28} />
+              <div className="mt-4 h-1 overflow-hidden rounded-full bg-[#f0edf5]"><div className="h-full rounded-full bg-gradient-to-r from-[#a995dc] to-[#6652a5]" style={{width: Math.min(100,Math.max(0,profile.score)) + '%'}}/></div>
+              <div className="mt-4"><p className="text-[9px] font-bold uppercase tracking-[.16em] text-[#a29aaa]">{profile.common.length ? 'You both like' : 'Shared outlook'}</p><div className="mt-2 flex flex-wrap gap-1.5">{profile.common.length ? profile.common.slice(0,5).map((interest: string)=><span key={interest} className="rounded-full bg-[#f5f2fa] px-2.5 py-1 text-[10px] font-medium text-[#695d80]">{interest}</span>) : <span className="text-[11px] text-[#898196]">Your answers show a compatible mindset.</span>}</div></div>
+              <div className="mt-4 flex gap-2 border-t border-[#f0edf4] pt-3">
+                <Link href={'/u/' + profile.id} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[#e7e1ee] px-3 py-2.5 text-xs font-semibold text-[#5f5472] transition hover:bg-[#faf8fc]">View profile <ArrowRight size={13}/></Link>
+                {connected.has(profile.id) ? <span className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#edf7f0] px-3 py-2.5 text-xs font-semibold text-[#39724c]">Connected</span> : requestSent ? <span className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#f3f0f8] px-3 py-2.5 text-xs font-semibold text-[#776b8b]">Request sent</span> : requestReceived ? <Link href="/requests" className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#594681] px-3 py-2.5 text-xs font-semibold text-white">Respond <Heart size={13}/></Link> : <form action={async()=>{'use server';await sendRequest(profile.id);}} className="flex-1"><button className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-[#594681] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-[#7056b2]"><Heart size={13}/> Connect</button></form>}
               </div>
-              <h3 className="mt-5 text-xl font-semibold text-[#29233d]">Your circle is taking shape.</h3>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 muted">
-                There are no compatible profiles to show right now. Invite friends to complete the 10 questions, then come back to discover people with a similar outlook.
-              </p>
-              <Link href="/assessment" className="btn btn-primary mt-6">
-                Review my answers <ArrowRight size={16} />
-              </Link>
             </div>
-          ) : (
-            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {matches.map(profile => (
-                <article
-                  key={profile.id}
-                  className="group surface flex h-full flex-col rounded-3xl p-5 transition duration-300 hover:-translate-y-1 hover:border-[#cfc4f2] hover:shadow-[0_22px_55px_rgba(48,35,83,0.10)]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="inline-flex max-w-[70%] items-center gap-1.5 truncate rounded-full bg-[#f3f0fa] px-3 py-1.5 text-xs font-medium text-[#706681]">
-                      {profile.city ? <><MapPin size={12} />{profile.city}</> : 'CONNECT community'}
-                    </span>
-                    <div className="text-right">
-                      <span className="block text-2xl font-bold tracking-tight text-[#6652a5]">{profile.score}%</span>
-                      <span className="text-[10px] font-semibold uppercase tracking-[.12em] text-[#928aa2]">match</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#eeeaf5]">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#9b89e8] to-[#6652a5]"
-                      style={{ width: `${Math.min(100, Math.max(0, profile.score))}%` }}
-                    />
-                  </div>
-
-                  <div className="mt-5 flex items-center gap-3">
-                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#e8e1ff] to-[#c9baff] text-lg font-bold text-[#51417e] ring-4 ring-[#f6f3ff]">
-                      {profile.initials || 'C'}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="truncate font-semibold text-[#29233d]">{profile.full_name || 'CONNECT member'}</h3>
-                      <p className="truncate text-sm muted">@{profile.username || 'member'}</p>
-                    </div>
-                  </div>
-
-                  <p className="mt-4 min-h-[3.5rem] text-sm leading-6 text-[#746d82]">
-                    {profile.bio || 'Here to meet thoughtful people and build genuine connections.'}
-                  </p>
-
-                  <div className="mt-4 border-t border-[#eeeaf3] pt-4">
-                    <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#91899f]">
-                      {profile.common.length ? 'Things you have in common' : 'Get to know them'}
-                    </p>
-                    {profile.common.length > 0 ? (
-                      <div className="mt-2 flex min-h-8 flex-wrap gap-2">
-                        {profile.common.slice(0, 4).map((interest: string) => (
-                          <span key={interest} className="rounded-full border border-[#e9e3f5] bg-[#faf9fd] px-2.5 py-1 text-xs text-[#625778]">{interest}</span>
-                        ))}
-                        {profile.common.length > 4 && (
-                          <span className="rounded-full bg-[#f0edf8] px-2.5 py-1 text-xs text-[#625778]">+{profile.common.length - 4}</span>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-xs leading-5 muted">Your assessment shows a shared outlook. Visit their profile to learn more.</p>
-                    )}
-                  </div>
-
-                  <div className="mt-auto flex gap-2 pt-5">
-                    <form action={async () => { 'use server'; await sendRequest(profile.id); }} className="min-w-0 flex-1">
-                      <button className="btn btn-primary w-full">
-                        <Heart size={15} /> Connect
-                      </button>
-                    </form>
-                    <Link href={`/u/${profile.id}`} className="btn btn-secondary">
-                      Profile
-                    </Link>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <p className="text-center text-xs leading-5 text-[#9992a7]">
-          Compatibility is calculated from your assessment. Individual answers stay private.
-        </p>
-      </div>
-    </AppShell>
-  );
+          </article>;
+        })}</div> : <div className="rounded-3xl border border-[#eeeaf3] bg-white px-6 py-14 text-center"><div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#f0ecf8] text-[#6a5798]"><Users size={24}/></div><h3 className="mt-4 text-lg font-bold text-[#302443]">Your circle is taking shape</h3><p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#898196]">There are no new compatible profiles to show right now. Invite more people to complete the assessment and grow your circle.</p><Link href="/assessment" className="mt-5 inline-flex rounded-full bg-[#594681] px-5 py-2.5 text-xs font-semibold text-white">Review my answers</Link></div>}
+      </section>
+      <footer className="px-4 py-8 text-center text-[10px] text-[#aaa3b2]">Compatibility is calculated securely. Individual assessment answers stay private.</footer>
+    </div>
+  </AppShell>;
 }
