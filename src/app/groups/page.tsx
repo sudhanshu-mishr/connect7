@@ -1,2 +1,34 @@
-import {redirect} from 'next/navigation';import {createClient} from '@/lib/supabase/server';import {AppShell} from '@/components/app-shell';import {createGroup,joinGroup} from '@/actions/social';
-export default async function Groups(){const db=await createClient();const {data:{user}}=await db.auth.getUser();if(!user)redirect('/login');const {data:groups}=await db.from('groups').select('id,name,description,created_at').order('created_at',{ascending:false}).limit(50);const {data:joined}=await db.from('group_members').select('group_id').eq('user_id',user.id);const set=new Set((joined||[]).map(x=>x.group_id));return <AppShell active="/groups"><h1 className="text-4xl font-semibold">Find your circle.</h1><p className="mt-2 muted">Small communities built around shared interests and intentions.</p><form action={createGroup} className="surface mt-7 grid gap-3 rounded-3xl p-5 md:grid-cols-[1fr_2fr_auto]"><input className="field" name="name" placeholder="Circle name" required minLength={3}/><input className="field" name="description" placeholder="What brings this circle together?"/><button className="btn btn-primary">Create circle</button></form><div className="mt-7 grid gap-4 md:grid-cols-2">{(groups||[]).map(g=><article key={g.id} className="surface rounded-3xl p-5"><span className="pill">COMMUNITY</span><h2 className="mt-4 text-xl font-semibold">{g.name}</h2><p className="mt-2 text-sm leading-6 muted">{g.description||'A place to connect around a shared interest.'}</p>{set.has(g.id)?<span className="mt-5 inline-block text-sm font-semibold text-[#6552a2]">You’re a member</span>:<form action={async()=>{'use server';await joinGroup(g.id);}} className="mt-5"><button className="btn btn-secondary">Join circle</button></form>}</article>)}</div></AppShell>}
+import Link from 'next/link';
+import {redirect} from 'next/navigation';
+import {createClient} from '@/lib/supabase/server';
+import {AppShell} from '@/components/app-shell';
+import {createGroup,joinGroup} from '@/actions/social';
+
+export default async function Groups(){
+  const db=await createClient();
+  const {data:{user}}=await db.auth.getUser();
+  if(!user) redirect('/login');
+  const {data:groups}=await db.from('groups').select('id,name,description,created_at').order('created_at',{ascending:false}).limit(50);
+  const {data:joined}=await db.from('group_members').select('group_id').eq('user_id',user.id);
+  const set=new Set((joined||[]).map(x=>x.group_id));
+  return <AppShell active="/groups">
+    <h1 className="text-4xl font-semibold">Find your circle.</h1>
+    <p className="mt-2 muted">Small communities built around shared interests and intentions.</p>
+    <form action={createGroup} className="surface mt-7 grid gap-3 rounded-3xl p-5 md:grid-cols-[1fr_2fr_auto]">
+      <input className="field" name="name" placeholder="Circle name" required minLength={3}/>
+      <input className="field" name="description" placeholder="What brings this circle together?"/>
+      <button className="btn btn-primary">Create circle</button>
+    </form>
+    <div className="mt-7 grid gap-4 md:grid-cols-2">
+      {(groups||[]).map(g=><article key={g.id} className="surface rounded-3xl p-5">
+        <span className="pill">COMMUNITY</span>
+        <h2 className="mt-4 text-xl font-semibold">{g.name}</h2>
+        <p className="mt-2 text-sm leading-6 muted">{g.description||'A place to connect around a shared interest.'}</p>
+        {set.has(g.id)
+          ? <Link href={`/groups/${g.id}`} className="btn btn-primary mt-5 inline-flex">Open community →</Link>
+          : <form action={async()=>{'use server';await joinGroup(g.id);}} className="mt-5"><button className="btn btn-secondary">Join circle</button></form>}
+      </article>)}
+      {(groups||[]).length===0&&<div className="surface rounded-3xl p-8 text-center text-sm muted">No communities yet. Create the first one.</div>}
+    </div>
+  </AppShell>;
+}
