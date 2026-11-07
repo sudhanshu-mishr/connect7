@@ -1,2 +1,35 @@
-@tailwind base;@tailwind components;@tailwind utilities;
-:root{color-scheme:light;--bg:#f8f7fb;--ink:#1c1930}*{box-sizing:border-box}body{background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}button,a,input,textarea{transition:all .18s ease}::selection{background:#dcd4ff;color:#20164c}.surface{background:rgba(255,255,255,.84);border:1px solid rgba(120,105,160,.13);box-shadow:0 16px 50px rgba(35,24,74,.055);backdrop-filter:blur(16px)}.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:14px;padding:.72rem 1rem;font-size:.9rem;font-weight:650}.btn-primary{background:#29233d;color:white}.btn-primary:hover{background:#4b3c70;transform:translateY(-1px)}.btn-secondary{background:#f0edf8;color:#332b4c}.field{width:100%;border:1px solid #e4e0ed;background:white;border-radius:13px;padding:.8rem .9rem;outline:none}.field:focus{border-color:#9a88e9;box-shadow:0 0 0 3px #9a88e922}.muted{color:#817b91}.pill{border-radius:999px;background:#f0edf8;padding:.35rem .7rem;font-size:.75rem;color:#625778}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{color-scheme:light;--bg:#f7f5fa;--ink:#211b35;--plum:#302443;--violet:#7056b2;--lavender:#eee8fb}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(ellipse at 80% -10%,rgba(220,208,248,.34),transparent 36%),var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+button,a,input,textarea{transition:all .2s ease}
+::selection{background:#dcd4ff;color:#20164c}
+.surface{background:rgba(255,255,255,.86);border:1px solid rgba(120,105,160,.13);box-shadow:0 16px 50px rgba(35,24,74,.055);backdrop-filter:blur(16px)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:14px;padding:.72rem 1rem;font-size:.9rem;font-weight:650}
+.btn-primary{background:linear-gradient(135deg,#302443,#55417f);color:white;box-shadow:0 8px 22px rgba(58,42,91,.16)}
+.btn-primary:hover{background:linear-gradient(135deg,#46345f,#7056b2);transform:translateY(-2px);box-shadow:0 12px 28px rgba(58,42,91,.22)}
+.btn-secondary{background:#f0edf8;color:#332b4c}
+.field{width:100%;border:1px solid #e4e0ed;background:white;border-radius:13px;padding:.8rem .9rem;outline:none}
+.field:focus{border-color:#9a88e9;box-shadow:0 0 0 3px #9a88e922}
+.muted{color:#817b91}
+.pill{border-radius:999px;background:#f0edf8;padding:.35rem .7rem;font-size:.75rem;color:#625778}
+.feed-hero{background:radial-gradient(circle at 82% 18%,rgba(177,147,239,.34),transparent 28%),linear-gradient(125deg,#251d36 0%,#3c2d59 52%,#6b55a0 100%);animation:rise-in .65s both}
+.feed-orb{position:absolute;border:1px solid rgba(255,255,255,.12);border-radius:999px;pointer-events:none}
+.feed-orb-one{width:290px;height:290px;right:-70px;top:-130px;box-shadow:0 0 0 34px rgba(255,255,255,.025),0 0 0 72px rgba(255,255,255,.018);animation:orb-float 10s ease-in-out infinite}
+.feed-orb-two{width:130px;height:130px;right:20%;bottom:-85px;background:rgba(221,204,255,.08);filter:blur(2px);animation:orb-float 8s ease-in-out infinite reverse}
+.feed-panel{animation:rise-in .7s .08s both}
+.photo-grid{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:1.1rem}
+.photo-card{overflow:hidden;border:1px solid rgba(120,105,160,.12);border-radius:1.55rem;background:rgba(255,255,255,.92);box-shadow:0 12px 38px rgba(35,24,74,.06);animation:rise-in .6s both;transition:transform .28s ease,box-shadow .28s ease}
+.photo-card:hover{transform:translateY(-5px);box-shadow:0 22px 50px rgba(35,24,74,.12)}
+.like-button{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;background:#f3f0f8;padding:.55rem .8rem;color:#716783;font-size:.75rem;font-weight:650}
+.like-button:hover{transform:scale(1.04);background:#eee8fb;color:#604c9b}
+.like-button-active{background:#fcecf3;color:#c34f7d}
+@keyframes rise-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes orb-float{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-12px,16px,0)}}
+@media(min-width:640px){.photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1100px){.photo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
