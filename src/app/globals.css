@@ -33,3 +33,6 @@ button,a,input,textarea{transition:all .2s ease}
 @media(min-width:640px){.photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(min-width:1100px){.photo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+@keyframes like-pop{0%{opacity:0;transform:scale(.45)}35%{opacity:1;transform:scale(1.18)}70%{opacity:1;transform:scale(.96)}100%{opacity:0;transform:scale(1.25)}}
