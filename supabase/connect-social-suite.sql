@@ -11,7 +11,7 @@ create table if not exists public.stories (
   created_at timestamptz not null default now(),
   expires_at timestamptz not null default (now() + interval '24 hours')
 );
-create index if not exists stories_active_idx on public.stories(expires_at desc);
+create index if not exists stories_active_idx on public.stories(expires_at desc);\ncreate index if not exists stories_user_id_idx on public.stories(user_id);
 alter table public.stories enable row level security;
 drop policy if exists stories_read_audience on public.stories;
 create policy stories_read_audience on public.stories
@@ -75,7 +75,7 @@ create table if not exists public.notes (
   created_at timestamptz not null default now(),
   expires_at timestamptz not null default (now() + interval '24 hours')
 );
-create index if not exists notes_active_idx on public.notes(expires_at desc);
+create index if not exists notes_active_idx on public.notes(expires_at desc);\ncreate index if not exists notes_user_id_idx on public.notes(user_id);
 alter table public.notes enable row level security;
 drop policy if exists notes_read_audience on public.notes;
 create policy notes_read_audience on public.notes
@@ -181,7 +181,7 @@ create table if not exists public.blend_items (
 );
 alter table public.blends enable row level security;
 alter table public.blend_members enable row level security;
-alter table public.blend_items enable row level security;
+alter table public.blend_items enable row level security;\ncreate index if not exists blend_members_user_id_idx on public.blend_members(user_id);
 
 create or replace function public.is_connect_blend_member(p_blend_id uuid, p_user_id uuid)
 returns boolean
@@ -215,7 +215,7 @@ begin
 end;
 $$;
 revoke all on function public.is_connect_blend_member(uuid, uuid) from public;
-revoke all on function public.create_connect_blend(text, text) from public;
+revoke all on function public.create_connect_blend(text, text) from public;\nrevoke all on table public.stories, public.notes, public.daily_prompts, public.prompt_responses, public.blends, public.blend_members, public.blend_items from anon, authenticated;\ngrant select, insert, delete on table public.stories, public.notes to authenticated;\ngrant select on table public.daily_prompts to authenticated;\ngrant select, insert, update on table public.prompt_responses to authenticated;\ngrant select on table public.blends to authenticated;\ngrant select, insert on table public.blend_members to authenticated;\ngrant select, insert on table public.blend_items to authenticated;
 grant execute on function public.is_connect_blend_member(uuid, uuid) to authenticated;
 grant execute on function public.create_connect_blend(text, text) to authenticated;
 
