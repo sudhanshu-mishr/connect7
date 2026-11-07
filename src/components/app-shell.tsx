@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useRef } from 'react';
 import { Bell, Compass, HeartHandshake, Home, Layers3, LogOut, MessageCircle, PlusSquare, Sparkles, Users, UserCheck, UserRound } from 'lucide-react';
 import { signOut } from '@/actions/auth';
 
@@ -24,7 +25,27 @@ const secondary = [
 
 export function AppShell({ children, active }: { children: React.ReactNode; active?: string }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
   const current = active || pathname;
+  const currentTab = primary.findIndex(({ href }) => current === href || current.startsWith(href + '/'));
+  const onContentTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+  };
+  const onContentTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start || currentTab < 0) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 85 || Math.abs(dx) < Math.abs(dy) * 1.35) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('input, textarea, select, button, a, [role="button"], [data-no-tab-swipe]')) return;
+    const nextIndex = dx < 0 ? currentTab + 1 : currentTab - 1;
+    if (nextIndex >= 0 && nextIndex < primary.length) router.push(primary[nextIndex].href);
+  };
   const isActive = (href: string) => current === href || (href !== '/photos' && current.startsWith(href + '/'));
   return (
     <div className="min-h-screen bg-[#faf9fc] md:flex">
@@ -66,7 +87,7 @@ export function AppShell({ children, active }: { children: React.ReactNode; acti
             <Link aria-label="Activity" href="/notifications" className="grid h-10 w-10 place-items-center rounded-full text-[#655b78] hover:bg-[#f4f0fa]"><Bell size={20}/></Link>
           </div>
         </header>
-        <div className="mx-auto max-w-5xl px-0 py-3 sm:px-4 md:px-8 md:py-8">{children}</div>
+        <div onTouchStart={onContentTouchStart} onTouchEnd={onContentTouchEnd} className="mx-auto min-h-[calc(100vh-4.5rem)] max-w-5xl touch-pan-y px-0 py-3 sm:px-4 md:min-h-0 md:px-8 md:py-8">{children}</div>
         <nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-[#ebe7f0] bg-white/95 px-1 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 shadow-[0_-8px_30px_rgba(35,24,74,.07)] backdrop-blur-xl md:hidden">
           {primary.map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} aria-current={isActive(href) ? 'page' : undefined} className={`relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] transition-all active:scale-95 ${isActive(href) ? 'font-bold text-[#604b9b]' : 'text-[#938da0]'}`}>
