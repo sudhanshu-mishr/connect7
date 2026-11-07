@@ -56,7 +56,7 @@ export default async function PublicProfile({ params }: { params: { id: string }
                 <p className="mt-3 whitespace-pre-wrap leading-7 text-[#625d70]">{p.bio || 'Still writing their story.'}</p>
                 <div className="mt-7">
                   <h2 className="text-xs font-bold uppercase tracking-[.18em] text-[#8b78e6]">Things they enjoy</h2>
-                  <div className="mt-3 flex flex-wrap gap-2">{(p.interests || []).length ? p.interests.map((interest: string) => <span key={interest} className="pill">{interest}</span>) : <p className="text-sm muted">Interests haven't been added yet.</p>}</div>
+                  <div className="mt-3 flex flex-wrap gap-2">{(p.interests || []).length ? p.interests.map((interest: string) => <span key={interest} className="pill">{interest}</span>) : <p className="text-sm muted">Interests haven&apos;t been added yet.</p>}</div>
                 </div>
               </div>
               <aside className="rounded-2xl bg-[#f7f5fb] p-5">
