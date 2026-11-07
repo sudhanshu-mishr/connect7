@@ -77,20 +77,22 @@ export function RealtimeChat({
     const body = content.trim();
     if (!body || isPending) return;
     setContent('');
-    startTransition(async () => {
-      try {
-        if (mode === 'group' && groupId) {
-          await sendGroupMessage(groupId, body);
-        } else if (mode === 'private') {
-          await sendPrivateMessage(conversationId, body);
-        } else {
-          throw new Error('Chat is not configured correctly.');
+    startTransition(() => {
+      void (async () => {
+        try {
+          if (mode === 'group' && groupId) {
+            await sendGroupMessage(groupId, body);
+          } else if (mode === 'private') {
+            await sendPrivateMessage(conversationId, body);
+          } else {
+            throw new Error('Chat is not configured correctly.');
+          }
+        } catch (error) {
+          setContent(body);
+          console.error('Message could not be sent:', error);
+          window.alert(error instanceof Error ? error.message : 'Message could not be sent. Please try again.');
         }
-      } catch (error) {
-        setContent(body);
-        console.error('Message could not be sent:', error);
-        window.alert(error instanceof Error ? error.message : 'Message could not be sent. Please try again.');
-      }
+      })();
     });
   }
 
