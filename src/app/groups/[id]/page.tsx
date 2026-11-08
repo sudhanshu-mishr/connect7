@@ -16,6 +16,7 @@ export default async function CommunityPage({params}:{params:{id:string}}){
   const {data:people}=isMember?await db.rpc('get_group_members',{p_group_id:group.id}):{data:[] as any[]};
   const {data:conversation}=isMember?await db.from('conversations').select('id').eq('group_id',group.id).eq('type','group').maybeSingle():{data:null};
   const {data:messages}=conversation?await db.from('messages').select('id,sender_id,content,created_at').eq('conversation_id',conversation.id).order('created_at',{ascending:true}).limit(100):{data:[] as any[]};
+  const {data:initialReactions}=messages?.length?await db.from('message_reactions').select('id,message_id,user_id,emoji').in('message_id',messages.map((m:any)=>m.id)):{data:[] as any[]};
   const memberNames=new Map<string,string>((people||[]).map((p:any)=>[p.id,p.full_name] as [string,string]));
   return <AppShell active="/groups">
     <Link href="/groups" className="text-sm font-semibold text-[#6552a2]">← All communities</Link>
@@ -26,6 +27,7 @@ export default async function CommunityPage({params}:{params:{id:string}}){
           conversationId={conversation.id}
           currentUserId={user.id}
           initialMessages={messages || []}
+          initialReactions={initialReactions || []}
           senderNames={Object.fromEntries((people || []).map((p:any) => [p.id, p.full_name || 'Community member']))}
           mode="group"
           groupId={group.id}
