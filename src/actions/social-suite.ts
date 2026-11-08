@@ -9,3 +9,25 @@ export async function answerDailyPrompt(fd:FormData){const{db,user}=await curren
 export async function createBlend(fd:FormData){const{db}=await current();const name=String(fd.get('name')||'').trim();const description=String(fd.get('description')||'').trim();if(name.length<3)throw new Error('Blend name must have at least 3 characters.');const{data,error}=await db.rpc('create_connect_blend',{p_name:name,p_description:description});if(error)throw new Error(error.message);revalidatePath('/blends');redirect('/blends/'+data);}
 export async function joinBlend(id:string){const{db,user}=await current();const{error}=await db.from('blend_members').upsert({blend_id:id,user_id:user.id},{onConflict:'blend_id,user_id',ignoreDuplicates:true});if(error)throw new Error(error.message);revalidatePath('/blends');redirect('/blends/'+id);}
 export async function addBlendItem(id:string,fd:FormData){const{db,user}=await current();const content=String(fd.get('content')||'').trim().slice(0,500);if(!content)throw new Error('Write something first.');const{error}=await db.from('blend_items').insert({blend_id:id,user_id:user.id,content});if(error)throw new Error(error.message);revalidatePath('/blends/'+id);}
+
+const STORY_REACTIONS=['❤️','😂','😍','🔥','👏','😮'] as const;
+export async function reactToStory(storyId:string,emoji:string){
+ const{db,user}=await current();
+ if(!(STORY_REACTIONS as readonly string[]).includes(emoji))throw new Error('Unsupported reaction.');
+ const{data:story}=await db.from('stories').select('id').eq('id',storyId).maybeSingle();
+ if(!story)throw new Error('This story is no longer available.');
+ const{error}=await db.from('story_reactions').upsert({story_id:storyId,user_id:user.id,emoji},{onConflict:'story_id,user_id'});
+ if(error)throw new Error(error.message);
+ revalidatePath('/stories');
+}
+export async function replyToStory(storyId:string,content:string){
+ const{db,user}=await current();
+ const body=content.trim();
+ if(!body||body.length>300)throw new Error('Reply must be between 1 and 300 characters.');
+ const{data:story}=await db.from('stories').select('id').eq('id',storyId).maybeSingle();
+ if(!story)throw new Error('This story is no longer available.');
+ const{error}=await db.from('story_replies').insert({story_id:storyId,sender_id:user.id,recipient_id:(await db.from('stories').select('user_id').eq('id',storyId).single()).data?.user_id,content:body});
+ if(error)throw new Error(error.message);
+ revalidatePath('/stories');
+ revalidatePath('/chats');
+}
