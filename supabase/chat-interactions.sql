@@ -29,3 +29,17 @@ create policy message_reactions_update_own on public.message_reactions
 drop policy if exists message_reactions_delete_own on public.message_reactions;
 create policy message_reactions_delete_own on public.message_reactions
  for delete to authenticated using (user_id=auth.uid());
+
+-- Ensure Supabase Realtime can publish reaction changes (idempotent).
+alter table public.message_reactions replica identity full;
+do $$
+begin
+ if not exists (
+  select 1 from pg_publication_tables
+  where pubname='supabase_realtime'
+    and schemaname='public'
+    and tablename='message_reactions'
+ ) then
+  alter publication supabase_realtime add table public.message_reactions;
+ end if;
+end $$;
