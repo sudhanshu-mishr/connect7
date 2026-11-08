@@ -10,7 +10,7 @@ type ChatMessage={id:string;sender_id:string;content:string;created_at:string;re
 type PresenceEntry={user_id?:string;typing?:boolean};
 type Props={conversationId:string;currentUserId:string;initialMessages:ChatMessage[];initialReactions?:Reaction[];senderNames?:Record<string,string>;mode:'private'|'group';groupId?:string;placeholder?:string};
 const emojis=['❤️','😂','😍','🔥','👏','😮'];
-export function RealtimeChat({conversationId,currentUserId,initialMessages,senderNames={},mode,groupId,placeholder='Message…'}:Props){
+export function RealtimeChat({conversationId,currentUserId,initialMessages,initialReactions=[],senderNames={},mode,groupId,placeholder='Message…'}:Props){
  const [messages,setMessages]=useState<ChatMessage[]>(initialMessages),[content,setContent]=useState(''),[live,setLive]=useState(false),[otherOnline,setOtherOnline]=useState(false),[otherTyping,setOtherTyping]=useState(false);
  const [reactions,setReactions]=useState<Reaction[]>(initialReactions),[reply,setReply]=useState<ChatMessage|null>(null),[reactionFor,setReactionFor]=useState<string|null>(null);
  const [isPending,startTransition]=useTransition();const bottomRef=useRef<HTMLDivElement>(null),channelRef=useRef<any>(null),typingTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
