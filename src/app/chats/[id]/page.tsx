@@ -20,6 +20,7 @@ export default async function PrivateChatPage({params}:{params:{id:string}}){
  const other=profiles?.[0];
  const {data:messages,error:messagesError}=await db.from('messages').select('id,sender_id,content,created_at').eq('conversation_id',params.id).order('created_at',{ascending:true}).limit(300);
  if(messagesError)throw new Error(messagesError.message);
+ const {data:initialReactions}=messages?.length?await db.from('message_reactions').select('id,message_id,user_id,emoji').in('message_id',messages.map(m=>m.id)):{data:[] as any[]};
  const displayName=other?.full_name||'Your friend';
  return <AppShell active="/chats">
   <div className="mx-auto max-w-3xl">
@@ -29,7 +30,7 @@ export default async function PrivateChatPage({params}:{params:{id:string}}){
     <div className="min-w-0 flex-1"><h1 className="truncate text-sm font-semibold">{displayName}</h1><p className="truncate text-[11px] muted">{other?.username?'@'+other.username:'CONNECT friend'}</p></div>
     {other&&<Link href={`/u/${other.id}`} aria-label="View profile" className="grid h-9 w-9 place-items-center rounded-full text-[#74658f] hover:bg-[#f0edf8]"><MoreHorizontal size={21}/></Link>}
    </header>
-   <RealtimeChat conversationId={params.id} currentUserId={user.id} initialMessages={messages||[]} mode="private"/>
+   <RealtimeChat conversationId={params.id} currentUserId={user.id} initialMessages={messages||[]} initialReactions={initialReactions||[]} mode="private"/>
   </div>
  </AppShell>;
 }
