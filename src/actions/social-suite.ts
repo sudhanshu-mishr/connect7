@@ -24,9 +24,10 @@ export async function replyToStory(storyId:string,content:string){
  const{db,user}=await current();
  const body=content.trim();
  if(!body||body.length>300)throw new Error('Reply must be between 1 and 300 characters.');
- const{data:story}=await db.from('stories').select('id').eq('id',storyId).maybeSingle();
- if(!story)throw new Error('This story is no longer available.');
- const{error}=await db.from('story_replies').insert({story_id:storyId,sender_id:user.id,recipient_id:(await db.from('stories').select('user_id').eq('id',storyId).single()).data?.user_id,content:body});
+ const{data:story,error:storyError}=await db.from('stories').select('id,user_id').eq('id',storyId).maybeSingle();
+ if(storyError||!story)throw new Error('This story is no longer available.');
+ if(story.user_id===user.id)throw new Error('You cannot reply to your own story.');
+ const{error}=await db.from('story_replies').insert({story_id:storyId,sender_id:user.id,recipient_id:story.user_id,content:body});
  if(error)throw new Error(error.message);
  revalidatePath('/stories');
  revalidatePath('/chats');
