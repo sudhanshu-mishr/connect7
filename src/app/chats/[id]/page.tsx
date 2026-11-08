@@ -18,7 +18,7 @@ export default async function PrivateChatPage({params}:{params:{id:string}}){
  const otherIds=(participants||[]).map(p=>p.user_id).filter(id=>id!==user.id);
  const {data:profiles}=otherIds.length?await db.from('profiles').select('id,full_name,username').in('id',otherIds):{data:[] as any[]};
  const other=profiles?.[0];
- const {data:messages,error:messagesError}=await db.from('messages').select('id,sender_id,content,created_at').eq('conversation_id',params.id).order('created_at',{ascending:true}).limit(300);
+ const {data:messages,error:messagesError}=await db.from('messages').select('id,sender_id,content,created_at,reply_to_id').eq('conversation_id',params.id).order('created_at',{ascending:true}).limit(300);
  if(messagesError)throw new Error(messagesError.message);
  const {data:initialReactions}=messages?.length?await db.from('message_reactions').select('id,message_id,user_id,emoji').in('message_id',messages.map(m=>m.id)):{data:[] as any[]};
  const displayName=other?.full_name||'Your friend';
