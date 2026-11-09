@@ -88,3 +88,15 @@ begin
 end; $$;
 revoke all on function public.decline_message_request(uuid) from public;
 grant execute on function public.decline_message_request(uuid) to authenticated;
+
+-- Notify the recipient without exposing the request message in push/email previews.
+create or replace function public.notify_message_request() returns trigger
+language plpgsql security definer set search_path=public as $$
+begin
+  insert into public.notifications(user_id,title,body)
+    values(new.to_user,'New message request','Someone sent you an introduction.');
+  return new;
+end; $$;
+drop trigger if exists on_message_request_notify on public.message_requests;
+create trigger on_message_request_notify after insert on public.message_requests
+  for each row execute function public.notify_message_request();
