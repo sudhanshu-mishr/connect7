@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import { Camera } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
-import { saveProfile } from '@/actions/profile';
+import { saveProfile, uploadProfilePhoto } from '@/actions/profile';
 
 export default async function Profile({ searchParams }: { searchParams: { error?: string; saved?: string } }) {
   const db = await createClient();
@@ -10,7 +12,7 @@ export default async function Profile({ searchParams }: { searchParams: { error?
   if (!user) redirect('/login');
 
   const { data: p, error } = await db.from('profiles')
-    .select('id,full_name,username,bio,city,interests,assessment_completed,is_discoverable')
+    .select('id,full_name,username,bio,city,interests,assessment_completed,is_discoverable,avatar_url')
     .eq('id', user.id).maybeSingle();
   if (error) throw new Error(error.message);
   if (!p) redirect('/onboarding');
@@ -52,7 +54,12 @@ export default async function Profile({ searchParams }: { searchParams: { error?
             <div className="h-28 bg-gradient-to-r from-[#29233d] via-[#514275] to-[#9b89d7]" />
             <div className="px-6 pb-6">
               <div className="-mt-12 flex flex-wrap items-end justify-between gap-4">
-                <div className="grid h-24 w-24 place-items-center rounded-[26px] border-4 border-white bg-gradient-to-br from-[#eee9ff] to-[#cfc3f6] text-3xl font-bold text-[#51417e] shadow-lg">{initials}</div>
+                <div className="relative h-24 w-24 shrink-0">
+                  <div className="relative h-24 w-24 overflow-hidden rounded-[26px] border-4 border-white bg-gradient-to-br from-[#eee9ff] to-[#cfc3f6] text-3xl font-bold text-[#51417e] shadow-lg">{p.avatar_url ? <Image src={p.avatar_url} alt="Your profile photo" fill sizes="96px" className="object-cover"/> : <span className="grid h-full w-full place-items-center">{initials}</span>}</div>
+                  <form action={uploadProfilePhoto} className="absolute -bottom-2 -right-2">
+                    <label className="grid h-9 w-9 cursor-pointer place-items-center rounded-full border-2 border-white bg-[#604b9b] text-white shadow-md transition hover:bg-[#7056b2]" title="Change profile photo"><Camera size={16}/><input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" required className="sr-only" onChange={(e) => { if (e.currentTarget.files?.length) e.currentTarget.form?.requestSubmit(); }}/></label>
+                  </form>
+                </div>
                 <span className="mb-2 rounded-full bg-[#f0edf8] px-3 py-1.5 text-xs font-semibold text-[#625778]">{p.assessment_completed ? 'Assessment complete' : 'Assessment pending'}</span>
               </div>
               <h2 className="mt-4 text-2xl font-semibold">{p.full_name}</h2>
