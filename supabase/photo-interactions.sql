@@ -53,3 +53,6 @@ create policy photo_bookmarks_insert_own on public.photo_bookmarks
 drop policy if exists photo_bookmarks_delete_own on public.photo_bookmarks;
 create policy photo_bookmarks_delete_own on public.photo_bookmarks
   for delete to authenticated using (user_id = auth.uid());
+
+-- Ensure the Supabase Data API roles can reach the table; RLS above still scopes rows.
+grant select, insert, delete on public.photo_comments to authenticated;

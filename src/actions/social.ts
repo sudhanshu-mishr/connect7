@@ -8,7 +8,24 @@ export async function sendGroupMessage(groupId:string,content:string){const {db,
 export async function createGroup(formData:FormData){const {db,user}=await auth();const name=String(formData.get('name')||'').trim();const description=String(formData.get('description')||'').trim();if(name.length<3) throw new Error('Group name must be at least 3 characters.');const {data,error}=await db.from('groups').insert({owner_id:user.id,name,description}).select('id').single();if(error) throw new Error(error.message);revalidatePath('/groups');redirect(`/groups/${data.id}`);}
 export async function joinGroup(groupId:string){const {db,user}=await auth();const {error}=await db.from('group_members').upsert({group_id:groupId,user_id:user.id},{onConflict:'group_id,user_id',ignoreDuplicates:true});if(error) throw new Error(error.message);revalidatePath('/groups');revalidatePath(`/groups/${groupId}`);revalidatePath('/chats');redirect(`/groups/${groupId}`);}
 export async function createPhoto(formData:FormData){const {db,user}=await auth();const file=formData.get('photo');if(!(file instanceof File)||!file.size) throw new Error('Choose a photo.');if(!file.type.startsWith('image/')||file.size>8*1024*1024) throw new Error('Use an image smaller than 8 MB.');const ext=file.name.split('.').pop()||'jpg';const path=`${user.id}/${crypto.randomUUID()}.${ext}`;const {error:up}=await db.storage.from('connect-photos').upload(path,file,{contentType:file.type,upsert:false});if(up) throw new Error(up.message);const {data}=db.storage.from('connect-photos').getPublicUrl(path);const {error}=await db.from('photo_posts').insert({user_id:user.id,image_url:data.publicUrl,caption:String(formData.get('caption')||'').slice(0,240)});if(error) throw new Error(error.message);revalidatePath('/photos');}
-export async function toggleLike(postId:string){const {db,user}=await auth();const {data:found}=await db.from('photo_likes').select('id').eq('post_id',postId).eq('user_id',user.id).maybeSingle();if(found) await db.from('photo_likes').delete().eq('id',found.id);else await db.from('photo_likes').insert({post_id:postId,user_id:user.id});revalidatePath('/photos');}
+export async function toggleLike(postId:string){const {db,user}=await auth();const {data:found,error:readError}=await db.from('photo_likes').select('id').eq('post_id',postId).eq('user_id',user.id).maybeSingle();if(readError) throw new Error(readError.message);if(found){const {error}=await db.from('photo_likes').delete().eq('id',found.id);if(error) throw new Error(error.message);}else{const {error}=await db.from('photo_likes').insert({post_id:postId,user_id:user.id});if(error) throw new Error(error.message);}revalidatePath('/photos');}
 
-export async function addPhotoComment(postId:string,content:string,parentId?:string|null){const {db,user}=await auth();const body=content.trim();if(!body||body.length>500) throw new Error('Comment must be between 1 and 500 characters.');if(parentId){const {data:parent}=await db.from('photo_comments').select('id').eq('id',parentId).eq('post_id',postId).maybeSingle();if(!parent) throw new Error('That comment is no longer available.');}const {error}=await db.from('photo_comments').insert({post_id:postId,user_id:user.id,parent_id:parentId||null,body});if(error) throw new Error(error.message);revalidatePath('/photos');}
+export async function addPhotoComment(postId:string,content:string,parentId?:string|null){
+ const {db,user}=await auth();
+ const body=content.trim();
+ if(!postId||!body||body.length>500) throw new Error('Comment must be between 1 and 500 characters.');
+ const {data:post,error:postError}=await db.from('photo_posts').select('id').eq('id',postId).maybeSingle();
+ if(postError) throw new Error(postError.message);
+ if(!post) throw new Error('This post is no longer available.');
+ if(parentId){
+  const {data:parent,error:parentError}=await db.from('photo_comments').select('id').eq('id',parentId).eq('post_id',postId).maybeSingle();
+  if(parentError) throw new Error(parentError.message);
+  if(!parent) throw new Error('That comment is no longer available.');
+ }
+ const {data:comment,error}=await db.from('photo_comments').insert({post_id:postId,user_id:user.id,parent_id:parentId||null,body}).select('id,post_id,user_id,parent_id,body,created_at').single();
+ if(error) throw new Error(error.message);
+ const {data:profile}=await db.from('profiles').select('full_name,username').eq('id',user.id).maybeSingle();
+ revalidatePath('/photos');
+ return {...comment,name:profile?.full_name||'You',username:profile?.username||null};
+}
 export async function togglePhotoBookmark(postId:string){const {db,user}=await auth();const {data:found,error:readError}=await db.from('photo_bookmarks').select('id').eq('post_id',postId).eq('user_id',user.id).maybeSingle();if(readError) throw new Error(readError.message);if(found){const {error}=await db.from('photo_bookmarks').delete().eq('id',found.id);if(error) throw new Error(error.message);return false;}const {error}=await db.from('photo_bookmarks').insert({post_id:postId,user_id:user.id});if(error) throw new Error(error.message);return true;}
