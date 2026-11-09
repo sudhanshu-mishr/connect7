@@ -45,7 +45,7 @@ export default async function MessageRequestsPage() {
               <form action={async()=>{'use server';await declineMessageRequest(request.id);}}><button className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-[#e7e1ee] px-3 py-2.5 text-xs font-semibold text-[#71687f] transition hover:bg-[#faf8fc]"><X size={14}/>Decline</button></form>
             </div>
           </article>;
-        })}</div> : <div className="rounded-3xl border border-dashed border-[#e4deed] bg-white/70 px-6 py-10 text-center"><div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#eee8fb] text-[#604c9b]"><MessageCircle size={21}/></div><h3 className="mt-3 text-sm font-semibold text-[#413750]">No message requests</h3><p className="mt-1 text-xs text-[#92899f]">New introductions from people you&apos;re not connected with will appear here.</p></div>}
+        })}</div> : <div className="rounded-3xl border border-dashed border-[#e4deed] bg-white/70 px-6 py-10 text-center"><div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#eee8fb] text-[#604c9b]"><MessageCircle size={21}/></div><h3 className="mt-3 text-sm font-semibold text-[#413750]">No message requests</h3><p className="mt-1 text-xs text-[#92899f]">New introductions from people outside your connections will appear here.</p></div>}
       </section>
 
       <section className="mt-8">
@@ -53,7 +53,7 @@ export default async function MessageRequestsPage() {
         {(outgoing || []).length ? <div className="divide-y divide-[#eeeaf3] rounded-2xl border border-[#eeeaf3] bg-white">{(outgoing || []).map(request => {
           const person = profileMap.get(request.to_user);
           return <div key={request.id} className="flex items-center gap-3 p-4"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#f0edf8] text-sm font-bold text-[#655b78]">{(person?.full_name || 'C').slice(0,1).toUpperCase()}</div><div className="min-w-0 flex-1"><Link href={'/u/'+request.to_user} className="block truncate text-sm font-semibold text-[#40384f]">{person?.full_name || 'CONNECT member'}</Link><p className="mt-0.5 truncate text-xs text-[#92899f]">{request.message}</p></div><span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#f4f1f8] px-2.5 py-1.5 text-[10px] font-semibold text-[#776b8b]"><Send size={11}/>Pending</span></div>;
-        })}</div> : <p className="rounded-2xl border border-[#eeeaf3] bg-white px-4 py-5 text-xs text-[#92899f]">You haven&apos;t sent any pending introductions.</p>}
+        })}</div> : <p className="rounded-2xl border border-[#eeeaf3] bg-white px-4 py-5 text-xs text-[#92899f]">No pending introductions sent yet.</p>}
       </section>
     </div>
   </AppShell>;
