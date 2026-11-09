@@ -15,7 +15,7 @@ export default async function PublicProfile({ params }: { params: { id: string }
   if (!user) redirect('/login');
 
   const { data: p, error } = await db.from('profiles')
-    .select('id,full_name,username,bio,city,interests,assessment_completed,is_discoverable')
+    .select('id,full_name,username,bio,city,interests,assessment_completed,is_discoverable,avatar_url')
     .eq('id', params.id).maybeSingle();
   if (error) throw new Error(error.message);
   if (!p) notFound();
@@ -46,7 +46,7 @@ export default async function PublicProfile({ params }: { params: { id: string }
         <div className="h-28 bg-[radial-gradient(circle_at_80%_20%,#a995d7,transparent_35%),linear-gradient(120deg,#29233d,#514275_55%,#8873bc)] sm:h-36"/>
         <div className="px-4 pb-5 sm:px-7">
           <div className="-mt-12 flex items-end justify-between gap-3 sm:-mt-14">
-            <div className="grid h-24 w-24 shrink-0 place-items-center rounded-full border-4 border-white bg-gradient-to-br from-[#eee9ff] to-[#cfc3f6] text-3xl font-bold text-[#51417e] shadow-md sm:h-28 sm:w-28">{initials}</div>
+            <div className="relative grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-[#eee9ff] to-[#cfc3f6] text-3xl font-bold text-[#51417e] shadow-md sm:h-28 sm:w-28">{p.avatar_url ? <Image src={p.avatar_url} alt="Profile photo" fill sizes="112px" className="object-cover"/> : initials}</div>
             <div className="mb-1 flex flex-wrap justify-end gap-2">
               {isSelf ? <Link href="/profile" className="rounded-full border border-[#ded7e9] px-4 py-2 text-xs font-semibold text-[#51417e] hover:bg-[#f7f4fb]">Edit profile</Link> : isFriend ? <form action={async () => { 'use server'; await startPrivateChat(p.id); }}><button className="inline-flex items-center gap-2 rounded-full bg-[#594681] px-4 py-2 text-xs font-semibold text-white hover:bg-[#7056b2]"><MessageCircle size={14}/>Message</button></form> : p.is_discoverable ? requestResult.data?.status === 'accepted' && requestResult.data.conversation_id ? <Link href={'/chats/' + requestResult.data.conversation_id} className="inline-flex items-center gap-2 rounded-full bg-[#594681] px-4 py-2 text-xs font-semibold text-white"><MessageCircle size={14}/>Open chat</Link> : requestResult.data?.status === 'pending' && requestResult.data.from_user === user.id ? <span className="rounded-full bg-[#f0edf8] px-4 py-2 text-xs font-semibold text-[#625778]">Request sent</span> : requestResult.data?.status === 'pending' ? <Link href="/message-requests" className="rounded-full bg-[#f0edf8] px-4 py-2 text-xs font-semibold text-[#625778]">Review request</Link> : <MessageRequestButton targetId={p.id}/> : <span className="rounded-full bg-[#f0edf8] px-4 py-2 text-xs font-semibold text-[#625778]">Not accepting requests</span>}
             </div>
