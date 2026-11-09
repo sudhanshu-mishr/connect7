@@ -2,7 +2,7 @@
 import {useEffect,useRef,useState,useTransition} from 'react';
 import {ArrowUp,Check,Wifi,WifiOff,Reply,Smile,X,Send} from 'lucide-react';
 import {createClient} from '@/lib/supabase/client';
-import {sendPrivateMessage,sendMessageReply,toggleMessageReaction} from '@/actions/chat';
+import {sendPrivateMessage,sendMessageReply,toggleMessageReaction,markConversationRead} from '@/actions/chat';
 import {sendGroupMessage} from '@/actions/social';
 
 type Reaction={id:string;message_id:string;user_id:string;emoji:string};
@@ -21,6 +21,7 @@ export function RealtimeChat({conversationId,currentUserId,initialMessages,initi
   .subscribe(status=>{const connected=status==='SUBSCRIBED';setLive(connected);if(connected)void channel.track({user_id:currentUserId,typing:false})});
   return()=>{if(typingTimer.current)clearTimeout(typingTimer.current);if(longPressTimer.current)clearTimeout(longPressTimer.current);setLive(false);setOtherOnline(false);setOtherTyping(false);channelRef.current=null;void db.removeChannel(channel)}},[conversationId,currentUserId]);
  useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth',block:'end'})},[messages,otherTyping]);
+ useEffect(()=>{void markConversationRead(conversationId).catch(error=>console.error('Could not mark conversation read:',error))},[conversationId,messages.length]);
  function handleTyping(value:string){setContent(value);const channel=channelRef.current;if(!channel||!live)return;void channel.track({user_id:currentUserId,typing:value.trim().length>0});if(typingTimer.current)clearTimeout(typingTimer.current);if(value.trim())typingTimer.current=setTimeout(()=>{void channel.track({user_id:currentUserId,typing:false})},1800)}
  function submit(event:React.FormEvent<HTMLFormElement>){event.preventDefault();const body=content.trim();if(!body||isPending)return;setContent('');if(typingTimer.current)clearTimeout(typingTimer.current);if(channelRef.current)void channelRef.current.track({user_id:currentUserId,typing:false});const replyTarget=reply;setReply(null);startTransition(()=>{void(async()=>{try{if(replyTarget)await sendMessageReply(conversationId,body,replyTarget.id);else if(mode==='group'&&groupId)await sendGroupMessage(groupId,body);else if(mode==='private')await sendPrivateMessage(conversationId,body);else throw new Error('Chat is not configured correctly.')}catch(error){setContent(body);setReply(replyTarget);console.error('Message could not be sent:',error);window.alert(error instanceof Error?error.message:'Message could not be sent. Please try again.')}})()})}
  function react(messageId:string,emoji:string){startTransition(()=>{void(async()=>{try{const added=await toggleMessageReaction(messageId,emoji);if(added){setReactions(current=>[...current.filter(r=>!(r.message_id===messageId&&r.user_id===currentUserId)),{id:'local-'+messageId,message_id:messageId,user_id:currentUserId,emoji}])}else setReactions(current=>current.filter(r=>!(r.message_id===messageId&&r.user_id===currentUserId)))}catch(error){window.alert(error instanceof Error?error.message:'Reaction failed')}})()});setReactionFor(null)}
