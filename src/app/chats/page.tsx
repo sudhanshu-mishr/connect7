@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
 import { NotesStrip } from '@/components/notes-strip';
@@ -63,7 +63,7 @@ export default async function Chats(){
   <div className="mx-auto max-w-3xl">
    <header className="mb-5 flex items-center justify-between px-4 sm:px-0">
     <div><h1 className="text-2xl font-bold tracking-tight">Messages</h1><p className="mt-1 text-xs text-[#92899f]">Your conversations, all in one place</p></div>
-    <Link href="/discover" aria-label="Find people" className="grid h-10 w-10 place-items-center rounded-full text-[#51417e] transition hover:bg-[#f1edf8]"><MessageCircle size={22}/></Link>
+    <div className="flex items-center gap-2"><Link href="/message-requests" aria-label="Message requests" className="grid h-10 w-10 place-items-center rounded-full text-[#51417e] transition hover:bg-[#f1edf8]"><Mail size={19}/></Link><Link href="/discover" aria-label="Find people" className="grid h-10 w-10 place-items-center rounded-full text-[#51417e] transition hover:bg-[#f1edf8]"><MessageCircle size={22}/></Link></div>
    </header>
    <NotesStrip notes={noteItems} currentUserId={user.id}/>
    <div className="mt-5 mb-2 flex items-center justify-between px-1">
