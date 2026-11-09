@@ -27,7 +27,7 @@ export default async function PublicProfile({ params }: { params: { id: string }
     isSelf ? Promise.resolve({ data: null }) : db.from('connections').select('id')
       .or(`and(user_a.eq.${user.id},user_b.eq.${p.id}),and(user_a.eq.${p.id},user_b.eq.${user.id})`).maybeSingle(),
     isSelf ? Promise.resolve({ data: null, error: null }) : db.rpc('get_connect_compatibility_score', { candidate_id: p.id }),
-    isSelf ? Promise.resolve({ data: null }) : db.from('message_requests').select('id,status').eq('from_user', user.id).eq('to_user', p.id).eq('status', 'pending').maybeSingle()
+    isSelf ? Promise.resolve({ data: null }) : db.from('message_requests').select('id,status,conversation_id').eq('from_user', user.id).eq('to_user', p.id).in('status', ['pending','accepted']).maybeSingle()
   ]);
   if (postsResult.error) throw new Error(postsResult.error.message);
   const posts = postsResult.data || [];
@@ -48,7 +48,7 @@ export default async function PublicProfile({ params }: { params: { id: string }
           <div className="-mt-12 flex items-end justify-between gap-3 sm:-mt-14">
             <div className="grid h-24 w-24 shrink-0 place-items-center rounded-full border-4 border-white bg-gradient-to-br from-[#eee9ff] to-[#cfc3f6] text-3xl font-bold text-[#51417e] shadow-md sm:h-28 sm:w-28">{initials}</div>
             <div className="mb-1 flex flex-wrap justify-end gap-2">
-              {isSelf ? <Link href="/profile" className="rounded-full border border-[#ded7e9] px-4 py-2 text-xs font-semibold text-[#51417e] hover:bg-[#f7f4fb]">Edit profile</Link> : isFriend ? <form action={async () => { 'use server'; await startPrivateChat(p.id); }}><button className="inline-flex items-center gap-2 rounded-full bg-[#594681] px-4 py-2 text-xs font-semibold text-white hover:bg-[#7056b2]"><MessageCircle size={14}/>Message</button></form> : p.is_discoverable ? requestResult.data ? <span className="rounded-full bg-[#f0edf8] px-4 py-2 text-xs font-semibold text-[#625778]">Request sent</span> : <MessageRequestButton targetId={p.id}/> : <span className="rounded-full bg-[#f0edf8] px-4 py-2 text-xs font-semibold text-[#625778]">Not accepting requests</span>}
+              {isSelf ? <Link href="/profile" className="rounded-full border border-[#ded7e9] px-4 py-2 text-xs font-semibold text-[#51417e] hover:bg-[#f7f4fb]">Edit profile</Link> : isFriend ? <form action={async () => { 'use server'; await startPrivateChat(p.id); }}><button className="inline-flex items-center gap-2 rounded-full bg-[#594681] px-4 py-2 text-xs font-semibold text-white hover:bg-[#7056b2]"><MessageCircle size={14}/>Message</button></form> : p.is_discoverable ? requestResult.data?.status === 'accepted' && requestResult.data.conversation_id ? <Link href={'/chats/' + requestResult.data.conversation_id} className="inline-flex items-center gap-2 rounded-full bg-[#594681] px-4 py-2 text-xs font-semibold text-white"><MessageCircle size={14}/>Open chat</Link> : requestResult.data?.status === 'pending' ? <span className="rounded-full bg-[#f0edf8] px-4 py-2 text-xs font-semibold text-[#625778]">Request sent</span> : <MessageRequestButton targetId={p.id}/> : <span className="rounded-full bg-[#f0edf8] px-4 py-2 text-xs font-semibold text-[#625778]">Not accepting requests</span>}
             </div>
           </div>
           <div className="mt-4">
