@@ -26,16 +26,29 @@ export default async function Chats(){
  const{data:{user}}=await db.auth.getUser();
  if(!user)redirect('/login');
 
- const[{data:memberships},{data:notes}]=await Promise.all([
-  db.from('conversation_members').select('conversation_id,last_read_at,is_pinned').eq('user_id',user.id),
-  db.from('notes').select('id,user_id,content,created_at').gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(50)
+ const membershipResult=await db.from('conversation_members').select('conversation_id,last_read_at,is_pinned').eq('user_id',user.id);
+ // Older databases may not have the pin column yet. Retry without it so existing chats remain visible.
+ const membershipFallback=membershipResult.error
+  ? await db.from('conversation_members').select('conversation_id,last_read_at').eq('user_id',user.id)
+  : null;
+ const memberships=membershipResult.error
+  ? (membershipFallback?.error ? (()=>{throw new Error('Could not load your conversations: '+membershipFallback.error.message)})() : (membershipFallback?.data||[]).map(row=>({...row,is_pinned:false})))
+  : (membershipResult.data||[]);
+ const notesResult=await db.from('notes').select('id,user_id,content,created_at').gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(50);
+ if(notesResult.error) throw new Error('Could not load notes: '+notesResult.error.message);
+ const notes=notesResult.data||[];
+ const ids=memberships.map(x=>x.conversation_id);
+ const [conversationsResult,messagesResult,membersResult]=await Promise.all([
+  ids.length?db.from('conversations').select('id,type,title,group_id').in('id',ids):Promise.resolve({data:[],error:null}),
+  ids.length?db.from('messages').select('id,conversation_id,sender_id,content,created_at').in('conversation_id',ids).order('created_at',{ascending:false}).limit(500):Promise.resolve({data:[],error:null}),
+  ids.length?db.from('conversation_members').select('conversation_id,user_id').in('conversation_id',ids).neq('user_id',user.id):Promise.resolve({data:[],error:null})
  ]);
- const ids=(memberships||[]).map(x=>x.conversation_id);
- const[{data:conversations},{data:messages},{data:members}]=await Promise.all([
-  ids.length?db.from('conversations').select('id,type,title,group_id').in('id',ids):Promise.resolve({data:[] as any[]}),
-  ids.length?db.from('messages').select('id,conversation_id,sender_id,content,created_at').in('conversation_id',ids).order('created_at',{ascending:false}).limit(500):Promise.resolve({data:[] as any[]}),
-  ids.length?db.from('conversation_members').select('conversation_id,user_id').in('conversation_id',ids).neq('user_id',user.id):Promise.resolve({data:[] as any[]})
- ]);
+ if(conversationsResult.error) throw new Error('Could not load conversations: '+conversationsResult.error.message);
+ if(messagesResult.error) throw new Error('Could not load messages: '+messagesResult.error.message);
+ if(membersResult.error) throw new Error('Could not load conversation participants: '+membersResult.error.message);
+ const conversations=conversationsResult.data||[];
+ const messages=messagesResult.data||[];
+ const members=membersResult.data||[];
  const profileIds=Array.from(new Set([...(members||[]).map(m=>m.user_id),...(notes||[]).map(n=>n.user_id)]));
  const{data:profiles}=profileIds.length?await db.from('profiles').select('id,full_name,username').in('id',profileIds):{data:[] as any[]};
  const byId=new Map((profiles||[]).map(p=>[p.id,p]));
